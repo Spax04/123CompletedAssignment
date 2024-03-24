@@ -1,0 +1,11 @@
+Event:
+  min_metric_id: 1
+  max_metric_id: 10
+  max_metric_value: 100
+  timestamp_format: "%Y-%m-%d %H:%M:%S"
+  timestamp: "timestamp"
+  message: "HELLO WORLD"
+  initial_reporter_id: 0
+  reporter_id_increment: 1
+  sleep_time_seconds: 1
+  asc_order: 1
