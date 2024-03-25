@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
+    <PackageReference Include="YamlDotNet" Version="15.1.2" />
   </ItemGroup>
 
 </Project>

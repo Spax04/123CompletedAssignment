@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RabbitProducer", "RabbitProducer\RabbitProducer.csproj", "{3C2933C6-2B6C-481E-9DE7-3E47A609618E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RabbitProducer", "RabbitProducer\RabbitProducer.csproj", "{3C2933C6-2B6C-481E-9DE7-3E47A609618E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

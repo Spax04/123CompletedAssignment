@@ -2,10 +2,27 @@ Event:
   min_metric_id: 1
   max_metric_id: 10
   max_metric_value: 100
-  timestamp_format: "%Y-%m-%d %H:%M:%S"
-  timestamp: "timestamp"
-  message: "HELLO WORLD"
+  timestamp_format: "yyyy-MM-dd HH:mm:ss"
+  timestamp: 'timestamp'
+  message: 'HELLO WORLD'
   initial_reporter_id: 0
   reporter_id_increment: 1
   sleep_time_seconds: 1
   asc_order: 1
+
+RabbitMQ:
+  host: 'localhost'
+  port: 5672
+  virtual_host: '/'
+  exchange: 'events_exchange'
+  queue: 'events_queue'
+  routing_key: 'events'
+  producer_name: 'RabbitMQProducer'
+  consumer_name: 'RabbitMQConsumer'
+
+CoucheBase:
+  couchbase_uri: 'couchbase://localhost' 
+  bucket_name: 'EventBacket'        
+  bucket_password: 'password'
+  username: 'admin'
+  user_password: 'password'
