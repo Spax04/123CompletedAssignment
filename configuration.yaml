@@ -2,16 +2,16 @@ Event:
   min_metric_id: 1
   max_metric_id: 10
   max_metric_value: 100
-  timestamp_format: 'yyyy-MM-dd HH:mm:ss'
+  timestamp_format: 'yyyy-MM-dd HH:mm:ss.fff'
   timestamp: 'timestamp'
   message: 'HELLO WORLD'
-  initial_reporter_id: 0
+  initial_reporter_id: 1
   reporter_id_increment: 1
   sleep_time_seconds: 1
   asc_order: 1
 
 RabbitMQ:
-  host: 'rabbitmq' 
+  host: 'rabbitmq'
   port: 5672
   virtual_host: '/'
   exchange: 'events_exchange'
@@ -21,13 +21,13 @@ RabbitMQ:
   consumer_name: 'RabbitMQConsumer'
 
 CoucheBase:
-  couchbase_uri: 'couchbase://couchbase' 
+  couchbase_uri: 'couchbase://couchbase'
   bucket_name: 'EventBucket'
   bucket_password: 'password'
   username: 'admin'
   user_password: 'password'
 
 Redis:
-  host: 'redis' 
+  host: 'redis'
   port: 6379
   sleep_time_seconds: 5

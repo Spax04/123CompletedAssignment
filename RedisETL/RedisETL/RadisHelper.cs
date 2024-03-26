@@ -16,7 +16,7 @@ namespace RedisETL
                 var latestTimestamp = await GetLatestTimestamp(redisDb);
 
                 // Query the data using LINQ to Couchbase
-                var query = context.Query<CouchbaseDocument>().Where(q => q.timestamp.epochDate > latestTimestamp);
+                var query = context.Query<CouchbaseDocument>().Where(q => q.timestamp.epochDate > latestTimestamp).OrderBy(q => q.timestamp.epochDate); ;
 
                 // Iterate through the results and prepare the Redis key-value pairs
                 await foreach (var row in query.ToAsyncEnumerable())
@@ -32,11 +32,10 @@ namespace RedisETL
                     await redisDb.StringSetAsync(redisKey, redisValue);
 
                     // Update latest timestamp in Redis
-                    if (latestTimestamp < row.timestamp.epochDate)
-                    {
-                        await SetLatestTimestamp(redisDb, row.timestamp.epochDate);
-                        latestTimestamp = row.timestamp.epochDate;
-                    }
+
+                    await SetLatestTimestamp(redisDb, row.timestamp.epochDate);
+                    latestTimestamp = row.timestamp.epochDate;
+
 
                     Console.WriteLine($"Object with key {redisKey} inserted into Redis database");
                 }

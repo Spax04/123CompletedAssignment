@@ -13,8 +13,12 @@ namespace RabbitConsumer
 {
     internal class Program
     {
+
         private static async Task Main(string[] args)
         {
+            ConnectionFactory factory = null;
+            IConnection connection = null;
+            IModel channel = null;
             try
             {
                 // Deserialize YAML file
@@ -38,7 +42,7 @@ namespace RabbitConsumer
                     options.ApplyProfile("wan-development");
 
                     var cluster = await Cluster.ConnectAsync(couchbaseUri, options);
-
+                    await cluster.WaitUntilReadyAsync(TimeSpan.FromSeconds(10));
                     IBucket bucket = null;
                     try
                     {
@@ -70,9 +74,16 @@ namespace RabbitConsumer
                     options => options.IgnoreIfExists(true)
                         );
 
+                    await cluster.QueryIndexes.CreateIndexAsync(
+                couchbaseConfig["bucket_name"].ToString(),
+                "epochDateIndex",
+              new[] { "epochDate" },
+             options => options.IgnoreIfExists(true)
+                        );
+
 
                     // Create RabbitMQ connection factory with loaded configuration
-                    var factory = new ConnectionFactory
+                    factory = new ConnectionFactory
                     {
                         HostName = rabbitMQConfig["host"].ToString(),
                         Port = int.Parse(rabbitMQConfig["port"].ToString()), // Ensure correct type conversion
@@ -80,66 +91,66 @@ namespace RabbitConsumer
                     };
 
                     // Create connection and channel
-                    using (var connection = factory.CreateConnection())
-                    using (var channel = connection.CreateModel())
-                    {
-                        string queue = rabbitMQConfig["queue"].ToString();
-                        channel.QueueDeclare(queue, false, false, false, null);
-                        channel.BasicQos(0, 1, false);
+                    connection = factory.CreateConnection();
+                    channel = connection.CreateModel();
 
-                        var consumer = new EventingBasicConsumer(channel);
-                        Console.WriteLine("Consumer created");
-                        consumer.Received += async (model, ea) =>
+                    string queue = rabbitMQConfig["queue"].ToString();
+                    channel.QueueDeclare(queue, true, false, false, null);
+                    channel.BasicQos(0, 1, false);
+
+                    var consumer = new EventingBasicConsumer(channel);
+                    Console.WriteLine("Consumer created");
+                    consumer.Received += async (model, ea) =>
+                     {
+                         var body = ea.Body.ToArray();
+                         var message = Encoding.UTF8.GetString(body);
+                         Console.WriteLine("Received message: {0}", message);
+
+                         // Deserialize JSON message to dynamic object
+                         var document = JsonConvert.DeserializeObject<dynamic>(message);
+                         DateTime timestamp = DateTime.Parse(document.timestamp.ToString());
+
+
+                         // Create a JObject directly
+                         JObject serializedDate = new JObject
                          {
-                             var body = ea.Body.ToArray();
-                             var message = Encoding.UTF8.GetString(body);
-                             Console.WriteLine("Received message: {0}", message);
-
-                             // Deserialize JSON message to dynamic object
-                             var document = JsonConvert.DeserializeObject<dynamic>(message);
-                             DateTime timestamp = DateTime.Parse(document.timestamp.ToString());
-
-
-                             // Create a JObject directly
-                             JObject serializedDate = new JObject
-                             {
                                  { "stringDate", timestamp.ToString("yyyy-MM-ddTHH:mm:ss") },
                                  { "epochDate", new DateTimeOffset(timestamp).ToUnixTimeSeconds() }
-                             };
-
-                             // Assign the serialized date to Timestamp
-                             document.timestamp = serializedDate;
-
-                             // Store the message in Couchbase
-                             var documentId = Guid.NewGuid().ToString(); // Generate a unique document ID
-                             try
-                             {
-                                 await bucket.DefaultCollection().UpsertAsync(documentId, document);
-                             }
-                             catch (Exception ex)
-                             {
-                                 Console.WriteLine(ex.ToString());
-                             }
-
-                             Console.WriteLine("Inserted document with ID: {0}", documentId);
                          };
 
-                        // Start consuming
-                        channel.BasicConsume(queue: queue, autoAck: true, consumer: consumer);
+                         // Assign the serialized date to Timestamp
+                         document.timestamp = serializedDate;
 
-                        Console.WriteLine("Consumer started.");
+                         // Store the message in Couchbase
+                         var documentId = Guid.NewGuid().ToString(); // Generate a unique document ID
+                         try
+                         {
+                             await bucket.DefaultCollection().UpsertAsync(documentId, document);
+                         }
+                         catch (Exception ex)
+                         {
+                             Console.WriteLine(ex.ToString());
+                         }
+
+                         Console.WriteLine("Inserted document with ID: {0}", documentId);
+                     };
+
+                    // Start consuming
+                    channel.BasicConsume(queue: queue, autoAck: true, consumer: consumer);
+
+                    Console.WriteLine("Consumer started.");
 
 
-                        // Handles Ctrl+C signal to gracefully shutdown the application.
-                        var waitHandle = new ManualResetEventSlim(false);
-                        Console.CancelKeyPress += (sender, eventArgs) =>
-                        {
-                            eventArgs.Cancel = true; // Prevent default Ctrl+C behavior
-                            waitHandle.Set(); // Signal exit
-                        };
-                        waitHandle.Wait();
-                    }
+                    // Handles Ctrl+C signal to gracefully shutdown the application.
+                    var waitHandle = new ManualResetEventSlim(false);
+                    Console.CancelKeyPress += (sender, eventArgs) =>
+                    {
+                        eventArgs.Cancel = true; // Prevent default Ctrl+C behavior
+                        waitHandle.Set(); // Signal exit
+                    };
+                    waitHandle.Wait();
                 }
+
                 else
                 {
                     Logger.Instance.LogError($"Error: RabbitMQ or Event configuration not found in YAML file.");
@@ -150,6 +161,20 @@ namespace RabbitConsumer
             {
                 Logger.Instance.LogError($"Error: {ex.Message}");
                 Console.WriteLine($"Error: {ex.Message}");
+            }
+            finally
+            {
+                // Dispose of connection and channel
+                if (channel != null && channel.IsOpen)
+                {
+                    channel.Close();
+                    channel.Dispose();
+                }
+                if (connection != null && connection.IsOpen)
+                {
+                    connection.Close();
+                    connection.Dispose();
+                }
             }
         }
     }

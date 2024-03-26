@@ -4,21 +4,17 @@ using System.Text;
 using System.Text.Json;
 using YamlDotNet.RepresentationModel;
 
-
 internal class Program
 {
     private static void Main(string[] args)
     {
-
-
-
         try
         {
             // Create an instance of the logger
             var logger = Logger.Instance;
 
             // Deserialize YAML file
-            YamlMappingNode yamlObject = ConfigurationLoader.LoadConfiguration();
+            YamlMappingNode yamlObject = ConfigurationLoader.Instance.GetConfiguration();
 
             // Extract RabbitMQ configuration
             var rabbitMQConfig = yamlObject["RabbitMQ"] as YamlMappingNode;
@@ -43,17 +39,19 @@ internal class Program
 
                     // Declare exchange
                     string exchangeName = rabbitMQConfig["exchange"].ToString();
-                    channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Direct);
+                    channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Direct, durable: true);
 
-                    channel.QueueDeclare(queue, false, false, false, null);
+                    // Declare the queue as durable
+                    channel.QueueDeclare(queue, durable: true, exclusive: false, autoDelete: false, arguments: null);
                     channel.QueueBind(queue, exchangeName, routingKey, null);
+
                     // Initialize reporter_id
                     int globalReporterId = int.Parse(eventConfig["initial_reporter_id"].ToString());
-
+                    EventFactory eventFactory = new EventFactory();
                     while (true)
                     {
-                        // Create an instance of the Event class
-                        var eventObject = new Event();
+                        // Create an instance of the Event class by Event factory
+                        var eventObject = eventFactory.CreateEvent();
                         eventObject.reporterId = globalReporterId;
                         var eventJson = JsonSerializer.Serialize(eventObject); // Serialize event object to JSON
 
@@ -62,13 +60,12 @@ internal class Program
                         var body = Encoding.UTF8.GetBytes(eventJson);
 
                         // Publish the event to the exchange with the routing key
-
                         channel.BasicPublish(exchange: exchangeName, routingKey: routingKey, basicProperties: null, body: body);
 
                         // Increment reporter_id for the next event
                         globalReporterId += int.Parse(eventConfig["reporter_id_increment"].ToString());
 
-                        // wait before producing the next event
+                        // Wait before producing the next event
                         Thread.Sleep(TimeSpan.FromSeconds(int.Parse(eventConfig["sleep_time_seconds"].ToString())));
                     }
                 }
