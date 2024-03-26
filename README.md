@@ -34,17 +34,18 @@ The project involves several components working together:
    - Transforms the data if necessary.
    - Stores the data in Redis for caching purposes.
 
+## Configuration
+
+- Configuration for RabbitMQ, Couchbase, and Redis can be adjusted in the `docker-compose.yml` file.
+- Additional configuration options for individual components can be found in their respective directories (`RabbitProducer`, `RabbitConsumer`, `RedisETL`).
+- Global configurations are stored in `configuration.yaml`. Refer to this file for adjusting settings such as connection strings, credentials, and other parameters.
+
 ## Running the Project
 
 1. Ensure you have Docker installed on your machine.
 2. Clone this repository.
 3. Navigate to the project directory.
 4. Run `docker-compose up` to start the services.
-
-## Configuration
-
-- Configuration for RabbitMQ, Couchbase, and Redis can be adjusted in the `docker-compose.yml` file.
-- Additional configuration options for individual components can be found in their respective directories (`RabbitProducer`, `RabbitConsumer`, `RedisETL`).
 
 ## Contributing
 
