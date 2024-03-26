@@ -18,12 +18,11 @@ namespace RedisETL
                 YamlMappingNode yamlObject = ConfigurationLoader.LoadConfiguration();
 
                 // Extract RabbitMQ configuration
-                var eventConfig = yamlObject["Event"] as YamlMappingNode;
                 var couchbaseConfig = yamlObject["CoucheBase"] as YamlMappingNode;
                 var redisHost = yamlObject["Redis"]["host"].ToString();
                 var redisPort = int.Parse(yamlObject["Redis"]["port"].ToString());
 
-                if (eventConfig != null && couchbaseConfig != null)
+                if (couchbaseConfig != null)
                 {
                     // Connect to Couchbase
                     var couchbaseUri = couchbaseConfig["couchbase_uri"].ToString();
@@ -43,11 +42,11 @@ namespace RedisETL
 
 
 
-                    Console.WriteLine("Radis is running");
+                    Console.WriteLine("Redis is running!");
 
                     while (true)
                     {
-                        Console.WriteLine("starting to get data");
+                        Console.WriteLine("Getting data from Couchbase");
                         var redis = ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}");
                         var redisDb = redis.GetDatabase();
                         await RadisHelper.ExtractTransformLoad(redisDb, context, yamlObject["Event"]["timestamp_format"].ToString());
@@ -57,8 +56,8 @@ namespace RedisETL
                 }
                 else
                 {
-                    Logger.Instance.LogError($"Error: Couchbase,Redis or Event configuration not found in YAML file.");
-                    Console.WriteLine("Error:Couchbase,Redis or Event configuration not found in YAML file.");
+                    Logger.Instance.LogError($"Error: Couchbase or Redis  configuration not found in YAML file.");
+                    Console.WriteLine("Error:Couchbase or Redis configuration not found in YAML file.");
                 }
             }
             catch (Exception ex)

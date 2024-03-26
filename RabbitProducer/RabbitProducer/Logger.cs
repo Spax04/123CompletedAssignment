@@ -4,7 +4,7 @@ namespace RabbitProducer
 {
     public class Logger
     {
-        private static readonly Lazy<Logger> lazyLogger = new Lazy<Logger>(() => new Logger()); //!
+        private static readonly Lazy<Logger> lazyLogger = new Lazy<Logger>(() => new Logger());
         private readonly TextWriterTraceListener listener;
 
         public static Logger Instance => lazyLogger.Value;

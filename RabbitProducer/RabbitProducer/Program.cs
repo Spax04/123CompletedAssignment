@@ -30,7 +30,7 @@ internal class Program
                 var factory = new ConnectionFactory
                 {
                     HostName = rabbitMQConfig["host"].ToString(),
-                    Port = int.Parse(rabbitMQConfig["port"].ToString()), // Ensure correct type conversion
+                    Port = int.Parse(rabbitMQConfig["port"].ToString()),
                     ClientProvidedName = rabbitMQConfig["producer_name"].ToString()
                 };
 
@@ -48,7 +48,7 @@ internal class Program
                     channel.QueueDeclare(queue, false, false, false, null);
                     channel.QueueBind(queue, exchangeName, routingKey, null);
                     // Initialize reporter_id
-                    int globalReporterId = int.Parse(eventConfig["initial_reporter_id"].ToString()); // Ensure correct type conversion
+                    int globalReporterId = int.Parse(eventConfig["initial_reporter_id"].ToString());
 
                     while (true)
                     {
@@ -66,10 +66,10 @@ internal class Program
                         channel.BasicPublish(exchange: exchangeName, routingKey: routingKey, basicProperties: null, body: body);
 
                         // Increment reporter_id for the next event
-                        globalReporterId += int.Parse(eventConfig["reporter_id_increment"].ToString()); // Ensure correct type conversion
+                        globalReporterId += int.Parse(eventConfig["reporter_id_increment"].ToString());
 
                         // wait before producing the next event
-                        Thread.Sleep(TimeSpan.FromSeconds(int.Parse(eventConfig["sleep_time_seconds"].ToString()))); // Ensure correct type conversion
+                        Thread.Sleep(TimeSpan.FromSeconds(int.Parse(eventConfig["sleep_time_seconds"].ToString())));
                     }
                 }
             }

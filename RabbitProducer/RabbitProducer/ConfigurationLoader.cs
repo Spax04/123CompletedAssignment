@@ -10,11 +10,8 @@ namespace RabbitProducer
 
             try
             {
-
                 var deserializer = new DeserializerBuilder().Build();
-                Console.WriteLine("here");
                 YamlMappingNode yamlObject = deserializer.Deserialize<YamlMappingNode>(new StreamReader("./configuration.yaml"));
-                Console.WriteLine("here1");
                 return yamlObject;
 
             }

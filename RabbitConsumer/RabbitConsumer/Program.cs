@@ -64,6 +64,7 @@ namespace RabbitConsumer
                         bucket = await cluster.BucketAsync(couchbaseConfig["bucket_name"].ToString());
                     }
 
+                    // Creating Primary Index
                     await cluster.QueryIndexes.CreatePrimaryIndexAsync(
                     couchbaseConfig["bucket_name"].ToString(),
                     options => options.IgnoreIfExists(true)
@@ -113,7 +114,6 @@ namespace RabbitConsumer
                              var documentId = Guid.NewGuid().ToString(); // Generate a unique document ID
                              try
                              {
-                                 Console.WriteLine("Trying to insert");
                                  await bucket.DefaultCollection().UpsertAsync(documentId, document);
                              }
                              catch (Exception ex)
@@ -127,8 +127,10 @@ namespace RabbitConsumer
                         // Start consuming
                         channel.BasicConsume(queue: queue, autoAck: true, consumer: consumer);
 
-                        Console.WriteLine("Consumer started. Press [Enter] to exit.");
-                        //  Console.ReadLine();
+                        Console.WriteLine("Consumer started.");
+
+
+                        // Handles Ctrl+C signal to gracefully shutdown the application.
                         var waitHandle = new ManualResetEventSlim(false);
                         Console.CancelKeyPress += (sender, eventArgs) =>
                         {

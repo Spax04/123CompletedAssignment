@@ -7,11 +7,11 @@ Event:
   message: 'HELLO WORLD'
   initial_reporter_id: 0
   reporter_id_increment: 1
-  sleep_time_seconds: 3
+  sleep_time_seconds: 1
   asc_order: 1
 
 RabbitMQ:
-  host: 'rabbitmq' # Docker service name
+  host: 'rabbitmq' 
   port: 5672
   virtual_host: '/'
   exchange: 'events_exchange'
@@ -21,13 +21,13 @@ RabbitMQ:
   consumer_name: 'RabbitMQConsumer'
 
 CoucheBase:
-  couchbase_uri: 'couchbase://couchbase' # Docker service name
+  couchbase_uri: 'couchbase://couchbase' 
   bucket_name: 'EventBucket'
   bucket_password: 'password'
   username: 'admin'
   user_password: 'password'
 
 Redis:
-  host: 'redis' # Docker service name
+  host: 'redis' 
   port: 6379
-  sleep_time_seconds: 6
+  sleep_time_seconds: 5
