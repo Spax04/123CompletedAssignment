@@ -1,81 +1,73 @@
 ﻿using Couchbase;
-using Couchbase.KeyValue;
-using Newtonsoft.Json;
+using Couchbase.Linq;
 using StackExchange.Redis;
 using YamlDotNet.RepresentationModel;
+using YamlDotNet.Serialization;
 
 namespace RedisETL
 {
     class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             try
             {
-                // Load configuration from YAML
-                var yamlObject = ConfigurationLoader.LoadConfiguration();
 
-                // Extract Couchbase configuration
+                // Deserialize YAML file
+                var deserializer = new DeserializerBuilder().Build();
+                YamlMappingNode yamlObject = ConfigurationLoader.LoadConfiguration();
+
+                // Extract RabbitMQ configuration
+                var eventConfig = yamlObject["Event"] as YamlMappingNode;
                 var couchbaseConfig = yamlObject["CoucheBase"] as YamlMappingNode;
-                var couchbaseUri = couchbaseConfig["couchbase_uri"].ToString();
-                var bucketName = couchbaseConfig["bucket_name"].ToString();
-                var username = couchbaseConfig["username"].ToString();
-                var password = couchbaseConfig["user_password"].ToString();
+                var redisHost = yamlObject["Redis"]["host"].ToString();
+                var redisPort = int.Parse(yamlObject["Redis"]["port"].ToString());
 
-                // Connect to Couchbase
-                var options = new ClusterOptions
+                if (eventConfig != null && couchbaseConfig != null)
                 {
-                    UserName = username,
-                    Password = password
-                };
-                options.ApplyProfile("wan-development");
-                var cluster = await Cluster.ConnectAsync(couchbaseUri, options);
-                var bucket = await cluster.BucketAsync(bucketName);
+                    // Connect to Couchbase
+                    var couchbaseUri = couchbaseConfig["couchbase_uri"].ToString();
+                    var options = new ClusterOptions
+                    {
+                        UserName = couchbaseConfig["username"].ToString(),
+                        Password = couchbaseConfig["user_password"].ToString(),
 
-                // Extract Redis configuration
-                var redisConfig = yamlObject["Redis"] as YamlMappingNode;
-                var redisHost = redisConfig["host"].ToString();
-                var redisPort = int.Parse(redisConfig["port"].ToString());
+                    }.AddLinq().ApplyProfile("wan-development");
 
-                // Connect to Redis
-                var redis = ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}");
-                var redisDb = redis.GetDatabase();
 
-                while (true)
+                    var cluster = await Cluster.ConnectAsync(couchbaseUri, options);
+
+                    var bucket = await cluster.BucketAsync(couchbaseConfig["bucket_name"].ToString());
+                    var context = new BucketContext(bucket);
+                    var context1 = new BucketContext(await cluster.BucketAsync("EventBucket"));
+
+
+
+                    Console.WriteLine("Radis is running");
+
+                    while (true)
+                    {
+                        Console.WriteLine("starting to get data");
+                        var redis = ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}");
+                        var redisDb = redis.GetDatabase();
+                        await RadisHelper.ExtractTransformLoad(redisDb, context, yamlObject["Event"]["timestamp_format"].ToString());
+                        Thread.Sleep(TimeSpan.FromSeconds(int.Parse(yamlObject["Redis"]["sleep_time_seconds"].ToString())));
+                    }
+
+                }
+                else
                 {
-                    ExtractTransformLoad(bucket, redisDb);
-                    // Sleep for specified time
-                    var sleepTimeSeconds = int.Parse(redisConfig["sleep_time_seconds"].ToString());
-                    await Task.Delay(sleepTimeSeconds * 1000);
+                    Logger.Instance.LogError($"Error: Couchbase,Redis or Event configuration not found in YAML file.");
+                    Console.WriteLine("Error:Couchbase,Redis or Event configuration not found in YAML file.");
                 }
             }
             catch (Exception ex)
             {
+                Logger.Instance.LogError($"Error: {ex.Message}");
                 Console.WriteLine($"Error: {ex.Message}");
             }
         }
 
-        static void ExtractTransformLoad(IBucket bucket, IDatabase redisDb)
-        {
-            // Extract data from Couchbase
-            var result = bucket.DefaultCollection().Get("example_key");
-            if (result != null)
-            {
-                var data = result.ContentAs<dynamic>();
 
-                // Transform data if needed
-
-                // Load data into Redis
-                var redisKey = data["reporterId"].ToString();
-                var redisValue = JsonConvert.SerializeObject(data);
-                redisDb.StringSet(redisKey, redisValue);
-
-                Console.WriteLine($"Data stored in Redis with key: {redisKey}");
-            }
-            else
-            {
-                Console.WriteLine("No data found in Couchbase.");
-            }
-        }
     }
 }

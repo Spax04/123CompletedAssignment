@@ -5,11 +5,11 @@ namespace RabbitProducer
 {
     public class Event
     {
-        public int ReporterId { get; set; }
-        public DateTime Timestamp { get; set; }
-        public int MetricId { get; set; }
-        public int MetricValue { get; set; }
-        public string Message { get; set; }
+        public int reporterId { get; set; }
+        public DateTime timestamp { get; set; }
+        public int metricId { get; set; }
+        public int metricValue { get; set; }
+        public string message { get; set; }
 
         public Event()
         {
@@ -27,17 +27,17 @@ namespace RabbitProducer
 
                 // Access configuration properties
                 var eventConfig = yamlObject["Event"];
-                ReporterId = Convert.ToInt32(eventConfig["initial_reporter_id"].ToString());
-                MetricId = GetRandomInt(Convert.ToInt32(eventConfig["min_metric_id"].ToString()), Convert.ToInt32(eventConfig["max_metric_id"].ToString()));
-                MetricValue = GetRandomInt(Convert.ToInt32(eventConfig["min_metric_id"].ToString()), Convert.ToInt32(eventConfig["max_metric_value"].ToString()));
-                Message = eventConfig["message"].ToString();
+                reporterId = Convert.ToInt32(eventConfig["initial_reporter_id"].ToString());
+                metricId = GetRandomInt(Convert.ToInt32(eventConfig["min_metric_id"].ToString()), Convert.ToInt32(eventConfig["max_metric_id"].ToString()));
+                metricValue = GetRandomInt(Convert.ToInt32(eventConfig["min_metric_id"].ToString()), Convert.ToInt32(eventConfig["max_metric_value"].ToString()));
+                message = eventConfig["message"].ToString();
 
                 // Set the timestamp
-                Timestamp = DateTime.Now;
+                timestamp = DateTime.Now;
 
                 // Format the timestamp using the specified format from the configuration
                 string timestampFormat = eventConfig["timestamp_format"].ToString();
-                Timestamp = DateTime.ParseExact(Timestamp.ToString(timestampFormat), timestampFormat, null);
+                timestamp = DateTime.ParseExact(timestamp.ToString(timestampFormat), timestampFormat, null);
 
                 // Log successful configuration loading
                 Logger.Instance.LogInfo("Configuration loaded successfully.");

@@ -14,9 +14,9 @@ namespace RedisETL
             {
                 string projectDirectory = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
-                var _yamlFilePath = Path.Combine(projectDirectory, "..", "..", "..", "..", "..", "configuration.yaml");
+                string yamlFilePath = "./configuration.yaml";
                 var deserializer = new DeserializerBuilder().Build();
-                YamlMappingNode yamlObject = deserializer.Deserialize<YamlMappingNode>(new StreamReader(_yamlFilePath));
+                YamlMappingNode yamlObject = deserializer.Deserialize<YamlMappingNode>(new StreamReader(yamlFilePath));
                 return yamlObject;
 
             }

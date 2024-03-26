@@ -1,5 +1,8 @@
 ﻿using Couchbase;
+using Couchbase.Management.Buckets;
+using Couchbase.Management.Query;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
@@ -35,7 +38,37 @@ namespace RabbitConsumer
                     options.ApplyProfile("wan-development");
 
                     var cluster = await Cluster.ConnectAsync(couchbaseUri, options);
-                    var bucket = await cluster.BucketAsync(couchbaseConfig["bucket_name"].ToString());
+
+                    IBucket bucket = null;
+                    try
+                    {
+                        // Attempt to get the bucket
+                        bucket = await cluster.BucketAsync(couchbaseConfig["bucket_name"].ToString());
+                    }
+                    catch
+                    {
+                        // Bucket not found, create it
+                        var bucketManager = cluster.Buckets;
+                        var bucketSettings = new BucketSettings
+                        {
+                            Name = couchbaseConfig["bucket_name"].ToString(),
+                            BucketType = BucketType.Couchbase,
+                            RamQuotaMB = 100, // Set the appropriate RAM quota
+                            FlushEnabled = false,
+                            ReplicaIndexes = false,
+                            ConflictResolutionType = ConflictResolutionType.Timestamp
+                        };
+                        await bucketManager.CreateBucketAsync(bucketSettings);
+                        await Task.Delay(3000);
+                        // Retry to get the bucket
+                        bucket = await cluster.BucketAsync(couchbaseConfig["bucket_name"].ToString());
+                    }
+
+                    await cluster.QueryIndexes.CreatePrimaryIndexAsync(
+                    couchbaseConfig["bucket_name"].ToString(),
+                    options => options.IgnoreIfExists(true)
+                        );
+
 
                     // Create RabbitMQ connection factory with loaded configuration
                     var factory = new ConnectionFactory
@@ -54,29 +87,55 @@ namespace RabbitConsumer
                         channel.BasicQos(0, 1, false);
 
                         var consumer = new EventingBasicConsumer(channel);
+                        Console.WriteLine("Consumer created");
                         consumer.Received += async (model, ea) =>
-                        {
-                            var body = ea.Body.ToArray();
-                            var message = Encoding.UTF8.GetString(body);
-                            Console.WriteLine("Received message: {0}", message);
+                         {
+                             var body = ea.Body.ToArray();
+                             var message = Encoding.UTF8.GetString(body);
+                             Console.WriteLine("Received message: {0}", message);
 
-                            // Deserialize JSON message to dynamic object
-                            var document = JsonConvert.DeserializeObject<dynamic>(message);
+                             // Deserialize JSON message to dynamic object
+                             var document = JsonConvert.DeserializeObject<dynamic>(message);
+                             DateTime timestamp = DateTime.Parse(document.timestamp.ToString());
 
 
+                             // Create a JObject directly
+                             JObject serializedDate = new JObject
+                             {
+                                 { "stringDate", timestamp.ToString("yyyy-MM-ddTHH:mm:ss") },
+                                 { "epochDate", new DateTimeOffset(timestamp).ToUnixTimeSeconds() }
+                             };
 
-                            // Store the message in Couchbase
-                            var documentId = Guid.NewGuid().ToString(); // Generate a unique document ID
-                            await bucket.DefaultCollection().UpsertAsync(documentId, document);
+                             // Assign the serialized date to Timestamp
+                             document.timestamp = serializedDate;
 
-                            Console.WriteLine("Inserted document with ID: {0}", documentId);
-                        };
+                             // Store the message in Couchbase
+                             var documentId = Guid.NewGuid().ToString(); // Generate a unique document ID
+                             try
+                             {
+                                 Console.WriteLine("Trying to insert");
+                                 await bucket.DefaultCollection().UpsertAsync(documentId, document);
+                             }
+                             catch (Exception ex)
+                             {
+                                 Console.WriteLine(ex.ToString());
+                             }
+
+                             Console.WriteLine("Inserted document with ID: {0}", documentId);
+                         };
 
                         // Start consuming
                         channel.BasicConsume(queue: queue, autoAck: true, consumer: consumer);
 
                         Console.WriteLine("Consumer started. Press [Enter] to exit.");
-                        Console.ReadLine();
+                        //  Console.ReadLine();
+                        var waitHandle = new ManualResetEventSlim(false);
+                        Console.CancelKeyPress += (sender, eventArgs) =>
+                        {
+                            eventArgs.Cancel = true; // Prevent default Ctrl+C behavior
+                            waitHandle.Set(); // Signal exit
+                        };
+                        waitHandle.Wait();
                     }
                 }
                 else

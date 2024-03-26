@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "penhbxdCZRHXyanDyPWtkiL7ih5wB3jpZw1gk7jXJf0Zd1QSqWuRfaecpLD6t90gbY3Z5OLsse9KMKI//QQvbw==",
+  "dgSpecHash": "yQG+Co18OykyoL22F6FveyznaOe7SpYZoIcA0FCjU9iCKyugwiNTRdFpKqGN7Mh0CB3XDD676fs1S58bFltIEg==",
   "success": true,
   "projectFilePath": "C:\\Users\\PC\\Desktop\\123CompletedAssignment\\RabbitConsumer\\RabbitConsumer\\RabbitConsumer.csproj",
   "expectedPackageFiles": [
@@ -36,7 +36,7 @@
     "C:\\Users\\PC\\.nuget\\packages\\microsoft.netcore.platforms\\2.0.0\\microsoft.netcore.platforms.2.0.0.nupkg.sha512",
     "C:\\Users\\PC\\.nuget\\packages\\microsoft.netcore.targets\\1.0.1\\microsoft.netcore.targets.1.0.1.nupkg.sha512",
     "C:\\Users\\PC\\.nuget\\packages\\microsoft.win32.registry\\4.5.0\\microsoft.win32.registry.4.5.0.nupkg.sha512",
-    "C:\\Users\\PC\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512",
+    "C:\\Users\\PC\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\PC\\.nuget\\packages\\rabbitmq.client\\6.8.1\\rabbitmq.client.6.8.1.nupkg.sha512",
     "C:\\Users\\PC\\.nuget\\packages\\remotion.linq\\2.2.0\\remotion.linq.2.2.0.nupkg.sha512",
     "C:\\Users\\PC\\.nuget\\packages\\simpleinjector\\5.2.1\\simpleinjector.5.2.1.nupkg.sha512",

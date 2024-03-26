@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using YamlDotNet.RepresentationModel;
 
+
 internal class Program
 {
     private static void Main(string[] args)
@@ -53,7 +54,7 @@ internal class Program
                     {
                         // Create an instance of the Event class
                         var eventObject = new Event();
-                        eventObject.ReporterId = globalReporterId;
+                        eventObject.reporterId = globalReporterId;
                         var eventJson = JsonSerializer.Serialize(eventObject); // Serialize event object to JSON
 
                         Console.WriteLine($"Producing event: {eventJson}");

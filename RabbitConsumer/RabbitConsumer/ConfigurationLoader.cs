@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using YamlDotNet.RepresentationModel;
+﻿using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 
 namespace RabbitConsumer
@@ -12,11 +11,10 @@ namespace RabbitConsumer
 
             try
             {
-                string projectDirectory = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-
-                var _yamlFilePath = Path.Combine(projectDirectory, "..", "..", "..", "..", "..", "configuration.yaml");
                 var deserializer = new DeserializerBuilder().Build();
-                YamlMappingNode yamlObject = deserializer.Deserialize<YamlMappingNode>(new StreamReader(_yamlFilePath));
+
+                YamlMappingNode yamlObject = deserializer.Deserialize<YamlMappingNode>(new StreamReader("./configuration.yaml"));
+
                 return yamlObject;
 
             }

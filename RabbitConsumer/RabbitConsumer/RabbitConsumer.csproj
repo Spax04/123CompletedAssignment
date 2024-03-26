@@ -11,6 +11,7 @@
     <PackageReference Include="Couchbase.Lite" Version="3.1.6" />
     <PackageReference Include="CouchbaseNetClient" Version="3.4.15" />
     <PackageReference Include="Linq2Couchbase" Version="2.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageReference Include="YamlDotNet" Version="15.1.2" />
   </ItemGroup>
